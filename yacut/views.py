@@ -8,7 +8,7 @@ from .forms import URL_mapForm
 from .models import URL_map
 
 
-def get_unique_short_id(url):
+def get_unique_short_id():
     """
     Generates a short link from a long URL.
     Only Latin letters and numbers with a limit of 6 characters.

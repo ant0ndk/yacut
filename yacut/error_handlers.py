@@ -45,9 +45,9 @@ def request_verification(data):
         raise InvalidAPIUsage('Отсутствует тело запроса', HTTPStatus.BAD_REQUEST)
     if not data.get('url'):
         raise InvalidAPIUsage('"url" является обязательным полем!', HTTPStatus.BAD_REQUEST)
-    custom_id = data.get('custom_id', get_unique_short_id(data['url']))
+    custom_id = data.get('custom_id', get_unique_short_id())
     if not custom_id:
-        custom_id = get_unique_short_id(data['url'])
+        custom_id = get_unique_short_id()
     if re.search('[А-Яа-я !@%#.&*+$_{+-]', custom_id) or len(custom_id) >= 16:
         raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки', HTTPStatus.BAD_REQUEST)
     if URL_map.query.filter_by(short=custom_id).first():
