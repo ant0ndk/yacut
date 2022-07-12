@@ -1,8 +1,7 @@
-import re
 from http import HTTPStatus
-from random import choice
-
-from flask import abort, flash, redirect, render_template, request
+import random
+import string
+from flask import flash, redirect, render_template, request
 
 from . import app, db
 from .forms import URL_mapForm
@@ -14,8 +13,11 @@ def get_unique_short_id(url):
     Generates a short link from a long URL.
     Only Latin letters and numbers with a limit of 6 characters.
     """
-    regex = re.sub('[^A-Za-z0-9]', '', url)
-    short = ''.join([choice(regex) for itr in range(6)])
+    short = ''.join(random.choices(
+        string.ascii_letters + string.digits, k=6)
+    )
+    if URL_map.query.filter_by(short=short).first():
+        short = get_unique_short_id()
     return short
 
 
@@ -32,14 +34,18 @@ def index_view():
     form = URL_mapForm()
     if form.validate_on_submit():
         short_name = form.custom_id.data
-        if short_name:
-            if URL_map.query.filter_by(short=short_name).first():
-                flash(f'Имя {short_name} уже занято!')
-                return render_template('index.html', form=form), HTTPStatus.BAD_REQUEST
-        else:
-            short_name = get_unique_short_id(form.original_link.data)
-        url = URL_map(original=form.original_link.data, short=short_name)
-        db.session.add(url)
+
+        if URL_map.query.filter_by(short=short_name).first():
+            flash(f'Имя {short_name} уже занято!')
+            return render_template('index.html', form=form), HTTPStatus.BAD_REQUEST
+
+        if short_name is None or short_name == '':
+            short_name = get_unique_short_id()
+        url_map = URL_map(
+            original=form.original_link.data,
+            short=short_name,
+        )
+        db.session.add(url_map)
         db.session.commit()
         flash(f'<h5 class="text-center">Ваша новая ссылка готова: '
               f'<a href="{request.url_root}{short_name}"'
@@ -54,7 +60,5 @@ def link_view(link):
     The function returns a short link to the original address.
     If there is no link, it returns 404.
     """
-    url = URL_map.query.filter_by(short=link).first()
-    if not url:
-        abort(404)
+    url = URL_map.query.filter_by(short=link).first_or_404()
     return redirect(url.original)
