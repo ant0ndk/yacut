@@ -16,7 +16,7 @@ def get_unique_short_id():
     short = ''.join(random.choices(
         string.ascii_letters + string.digits, k=6)
     )
-    if URL_map.query.filter_by(short=short).first():
+    while URL_map.query.filter_by(short=short).first():
         short = get_unique_short_id()
     return short
 
